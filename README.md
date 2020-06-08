@@ -1,4 +1,5 @@
 <p align="center">
+  <img src="images/csi-kubernetes.png">
   <img src="images/csi-logo.png">
 </p>
 
