@@ -25,40 +25,40 @@ func NewDriver(config *config.Config) (*Driver, error) {
 		return nil, nil
 	}
 
-	drv := &Driver{
+	driver := &Driver{
 		Config: config,
 	}
 
 	glog.V(1).Infof("GlusterFS Simple CSI driver initialized")
 
-	return drv, nil
+	return driver, nil
 
 }
 
 // NewControllerServer
-func NewControllerServer(dr *Driver) *ControllerServer {
+func NewControllerServer(driver *Driver) *ControllerServer {
 	return &ControllerServer{
-		Driver: dr,
+		Driver: driver,
 	}
 }
 
 // NewNodeServer
-func NewNodeServer(dr *Driver) *NodeServer {
+func NewNodeServer(driver *Driver) *NodeServer {
 	return &NodeServer{
-		Driver: dr,
+		Driver: driver,
 	}
 }
 
 // NewIdentityServer
-func NewIdentityServer(dr *Driver) *IdentityServer {
+func NewIdentityServer(driver *Driver) *IdentityServer {
 	return &IdentityServer{
-		Driver: dr,
+		Driver: driver,
 	}
 }
 
 // Run
 func (dr *Driver) Run() {
-	srv := csicommon.NewNonBlockingGRPCServer()
-	srv.Start(dr.Endpoint, NewIdentityServer(dr), NewControllerServer(dr), NewNodeServer(dr))
-	srv.Wait()
+	server := csicommon.NewNonBlockingGRPCServer()
+	server.Start(dr.Endpoint, NewIdentityServer(dr), NewControllerServer(dr), NewNodeServer(dr))
+	server.Wait()
 }
