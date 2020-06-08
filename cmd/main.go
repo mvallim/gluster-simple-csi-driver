@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs"
-	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs/config"
+	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs"
+	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs/config"
 )
 
 func main() {
