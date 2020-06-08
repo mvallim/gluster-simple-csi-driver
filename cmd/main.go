@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/golang/glog"
 
 	"github.com/spf13/cobra"
 
@@ -22,7 +23,23 @@ func main() {
 		Use:   "gluster-simple-csi-plugin",
 		Short: "GlusterFS Simple CSI plugin",
 		Run: func(cmd *cobra.Command, args []string) {
-			handle(config)
+
+			if config.Endpoint == "" {
+				config.Endpoint = os.Getenv("CSI_ENDPOINT")
+			}
+
+			if config.NodeID == "" {
+				config.NodeID = os.Getenv("NODE_ID")
+			}
+
+			drv, err := glusterfs.NewDriver(config)
+
+			if err != nil {
+				glog.Fatalln(err)
+			}
+
+			drv.Run()
+
 		},
 	}
 
@@ -37,25 +54,5 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
 		os.Exit(1)
 	}
-
-}
-
-func handle(config *config.Config) {
-
-	if config.Endpoint == "" {
-		config.Endpoint = os.Getenv("CSI_ENDPOINT")
-	}
-
-	if config.NodeID == "" {
-		config.NodeID = os.Getenv("NODE_ID")
-	}
-
-	drv, err := glusterfs.NewDriver(config)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	drv.Run()
 
 }
