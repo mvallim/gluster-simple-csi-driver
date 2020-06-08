@@ -1,0 +1,61 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-attacher-glusterfs-plugin
+  labels:
+    app: csi-attacher-glusterfs-plugin
+spec:
+  selector:
+    app: csi-attacher-glusterfs-plugin
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1beta1
+metadata:
+  name: csi-attacher-glusterfs-plugin
+spec:
+  serviceName: "csi-attacher"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: csi-attacher-glusterfs-plugin
+    spec:
+      serviceAccount: glusterfs-csi
+      containers:
+        - name: csi-attacher
+          image: quay.io/k8scsi/csi-attacher:v1.0.1
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+
+        - name: glusterfs
+          image: docker.io/mvallim/glusterfs-csi-driver
+          args:
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix://plugin/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /plugin
+      volumes:
+        - name: socket-dir
+          emptyDir:

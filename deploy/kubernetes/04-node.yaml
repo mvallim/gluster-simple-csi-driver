@@ -1,0 +1,82 @@
+---
+kind: DaemonSet
+apiVersion: apps/v1beta2
+metadata:
+  name: csi-node-glusterfs-plugin
+spec:
+  selector:
+    matchLabels:
+      app: csi-node-glusterfs-plugin
+  template:
+    metadata:
+      labels:
+        app: csi-node-glusterfs-plugin
+    spec:
+      serviceAccount: glusterfs-csi
+      hostNetwork: true
+      containers:
+        - name: csi-node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.0.1
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+          lifecycle:
+            preStop:
+              exec:
+                command: [
+                  "/bin/sh", "-c",
+                  "rm -rf /registration/org.gluster.glusterfs \
+                  /registration/org.gluster.glusterfs-reg.sock"
+                ]
+          env:
+            - name: ADDRESS
+              value: /plugin/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: registration-dir
+              mountPath: /registration
+        - name: glusterfs
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: docker.io/mvallim/glusterfs-csi-driver
+          args:
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix://plugin/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins-registry/
+            type: Directory
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
