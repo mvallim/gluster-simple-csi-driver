@@ -57,8 +57,8 @@ func NewIdentityServer(driver *Driver) *IdentityServer {
 }
 
 // Run
-func (dr *Driver) Run() {
+func (driver *Driver) Run() {
 	server := csicommon.NewNonBlockingGRPCServer()
-	server.Start(dr.Endpoint, NewIdentityServer(dr), NewControllerServer(dr), NewNodeServer(dr))
+	server.Start(driver.Endpoint, NewIdentityServer(driver), NewControllerServer(driver), NewNodeServer(driver))
 	server.Wait()
 }
