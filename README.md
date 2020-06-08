@@ -1,1 +1,1 @@
-# gluster-csi-driver
+# GlusterFS CSI Driver
