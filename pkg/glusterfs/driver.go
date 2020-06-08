@@ -1,9 +1,8 @@
 package glusterfs
 
 import (
-	"context/pkg/glusterfs/config"
-
 	csicommon "github.com/kubernetes-csi/drivers/pkg/csi-common"
+	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs/config"
 )
 
 const (
