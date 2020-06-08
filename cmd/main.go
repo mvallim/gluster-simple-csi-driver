@@ -1,27 +1,25 @@
 package main
 
 import (
-	"flag"
 	"log"
 
-	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs/driver"
+	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs"
+	"github.com/mvallim/gluster-csi-driver/pkg/glusterfs/config"
 )
 
 func main() {
-	var (
-		endpoint = flag.String("endpoint", "unix:///var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock", "CSI endpoint")
-	)
 
-	flag.Parse()
+	var config = config.NewConfig()
 
-	drv, err := driver.NewDriver(*endpoint)
+	config.NodeID = ""
+	config.Endpoint = "unix:///var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock"
+
+	drv, err := glusterfs.New(config)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := drv.Run(); err != nil {
-		log.Fatalln(err)
-	}
+	drv.Run()
 
 }

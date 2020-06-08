@@ -1,5 +1,5 @@
 VERSION ?= v0.0.0
-NAME=gluster-csi-driver
+NAME=gluster-csi-plugin
 
 all: publish
 

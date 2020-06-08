@@ -14,8 +14,8 @@ type Driver struct {
 	*config.Config
 }
 
-func New(config *config.Config) *Driver {
-	return nil
+func New(config *config.Config) (*Driver, error) {
+	return nil, nil
 }
 
 func NewControllerServer(dr *Driver) *ControllerServer {
