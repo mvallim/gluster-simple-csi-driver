@@ -1,4 +1,4 @@
-VERSION ?= v0.0.0
+VERSION ?= v1.0.0
 NAME=gluster-csi-plugin
 
 all: publish
