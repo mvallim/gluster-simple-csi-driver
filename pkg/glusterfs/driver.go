@@ -16,7 +16,7 @@ type Driver struct {
 }
 
 // New
-func New(config *config.Config) (*Driver, error) {
+func NewDriver(config *config.Config) (*Driver, error) {
 	return nil, nil
 }
 

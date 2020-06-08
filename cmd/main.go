@@ -14,7 +14,7 @@ func main() {
 	config.NodeID = ""
 	config.Endpoint = "unix:///var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock"
 
-	drv, err := glusterfs.New(config)
+	drv, err := glusterfs.NewDriver(config)
 
 	if err != nil {
 		log.Fatalln(err)
