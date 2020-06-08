@@ -46,9 +46,7 @@ func main() {
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
 	cmd.PersistentFlags().StringVar(&config.NodeID, "nodeid", "", "CSI node id")
-	_ = cmd.MarkPersistentFlagRequired("nodeid")
 	cmd.PersistentFlags().StringVar(&config.Endpoint, "endpoint", "", "CSI endpoint")
-	_ = cmd.MarkPersistentFlagRequired("endpoint")
 
 	if err := cmd.Execute(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
