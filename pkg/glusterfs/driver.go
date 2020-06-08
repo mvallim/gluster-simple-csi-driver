@@ -1,6 +1,8 @@
 package glusterfs
 
 import (
+	"github.com/golang/glog"
+
 	csicommon "github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs/config"
 )
@@ -15,29 +17,48 @@ type Driver struct {
 	*config.Config
 }
 
-// New
+// NewDriver
 func NewDriver(config *config.Config) (*Driver, error) {
-	return nil, nil
+
+	if config == nil {
+		glog.Errorf("GlusterFS Simple CSI driver initialization failed")
+		return nil, nil
+	}
+
+	drv := &Driver{
+		Config: config,
+	}
+
+	glog.V(1).Infof("GlusterFS Simple CSI driver initialized")
+
+	return drv, nil
+
 }
 
 // NewControllerServer
 func NewControllerServer(dr *Driver) *ControllerServer {
-	return nil
+	return &ControllerServer{
+		Driver: dr,
+	}
 }
 
 // NewNodeServer
 func NewNodeServer(dr *Driver) *NodeServer {
-	return nil
+	return &NodeServer{
+		Driver: dr,
+	}
 }
 
 // NewIdentityServer
 func NewIdentityServer(dr *Driver) *IdentityServer {
-	return nil
+	return &IdentityServer{
+		Driver: dr,
+	}
 }
 
 // Run
 func (dr *Driver) Run() {
 	srv := csicommon.NewNonBlockingGRPCServer()
-	srv.Start("g.Endpoint", NewIdentityServer(dr), NewControllerServer(dr), NewNodeServer(dr))
+	srv.Start(dr.Endpoint, NewIdentityServer(dr), NewControllerServer(dr), NewNodeServer(dr))
 	srv.Wait()
 }
