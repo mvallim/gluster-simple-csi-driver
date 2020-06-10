@@ -3,6 +3,12 @@ package glusterfs
 import (
 	"context"
 
+	"github.com/golang/glog"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
 
@@ -12,6 +18,29 @@ type ControllerServer struct {
 
 // CreateVolume
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+	glog.V(2).Infof("request received %+v", protosanitizer.StripSecrets(req))
+
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "request cannot be empty")
+	}
+
+	if req.GetName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "name is a required field")
+	}
+
+	reqCaps := req.GetVolumeCapabilities()
+	if reqCaps == nil {
+		return nil, status.Error(codes.InvalidArgument, "volume capabilities is a required field")
+	}
+
+	for _, cap := range reqCaps {
+		if cap.GetBlock() != nil {
+			return nil, status.Error(codes.Unimplemented, "block volume not supported")
+		}
+	}
+
+	glog.V(1).Infof("creating volume with name %s", req.Name)
+
 	return nil, nil
 }
 

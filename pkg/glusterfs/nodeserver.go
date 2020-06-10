@@ -3,11 +3,14 @@ package glusterfs
 import (
 	"context"
 
+	"k8s.io/utils/mount"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
 
 type NodeServer struct {
-	*Driver
+	driver  *Driver
+	mounter mount.Interface
 }
 
 // NodeStageVolume

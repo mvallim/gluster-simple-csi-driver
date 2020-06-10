@@ -3,6 +3,8 @@ package glusterfs
 import (
 	"github.com/golang/glog"
 
+	"k8s.io/utils/mount"
+
 	csicommon "github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs/config"
 )
@@ -45,7 +47,8 @@ func NewControllerServer(driver *Driver) *ControllerServer {
 // NewNodeServer
 func NewNodeServer(driver *Driver) *NodeServer {
 	return &NodeServer{
-		Driver: driver,
+		driver:  driver,
+		mounter: mount.New(""),
 	}
 }
 
