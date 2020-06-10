@@ -4,32 +4,34 @@ import (
 	"context"
 
 	"github.com/golang/glog"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
 
-// IdentityServer
+// IdentityServer struct of Glusterfs CSI driver with supported methods of CSI identity server spec.
 type IdentityServer struct {
 	*Driver
 }
 
-// GetPluginInfo
+// GetPluginInfo returns metadata of the plugin
 func (is *IdentityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 
-	resp := &csi.GetPluginInfoResponse{
+	glog.V(2).Infof("received identity plugin info request %+v", protosanitizer.StripSecrets(req))
+
+	return &csi.GetPluginInfoResponse{
 		Name:          glusterfsCSIDriverName,
 		VendorVersion: glusterfsCSIDriverVersion,
-	}
+	}, nil
 
-	glog.V(1).Infof("plugininfo response: %+v", resp)
-
-	return resp, nil
 }
 
-// GetPluginCapabilities
+// GetPluginCapabilities returns available capabilities of the plugin
 func (is *IdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
 
-	resp := &csi.GetPluginCapabilitiesResponse{
+	glog.V(2).Infof("received identity plugin capabilities request %+v", protosanitizer.StripSecrets(req))
+
+	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{
 			{
 				Type: &csi.PluginCapability_Service_{
@@ -39,14 +41,11 @@ func (is *IdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.Ge
 				},
 			},
 		},
-	}
+	}, nil
 
-	glog.V(1).Infof("plugin capability response: %+v", resp)
-
-	return resp, nil
 }
 
-// Probe
+// Probe returns the health and readiness of the plugin
 func (is *IdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
 	return &csi.ProbeResponse{}, nil
 }
