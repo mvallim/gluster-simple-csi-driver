@@ -12,6 +12,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 )
 
 // NodeServer struct of Glusterfs CSI driver with supported methods of CSI node server spec.
@@ -33,6 +34,8 @@ func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 // NodePublishVolume mounts the volume mounted to the staging path to the target path
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 
+	glog.V(2).Infof("received node publish volume request %+v", protosanitizer.StripSecrets(req))
+
 	targetPath := req.GetTargetPath()
 
 	mounted, error := ns.mounter.IsLikelyNotMountPoint(targetPath)
@@ -40,7 +43,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	if error != nil {
 
 		if os.IsNotExist(error) {
-			if error := os.MkdirAll(targetPath, 0750); error != nil {
+			if error := os.MkdirAll(targetPath, 0755); error != nil {
 				return nil, status.Error(codes.Internal, error.Error())
 			}
 			mounted = true
@@ -83,6 +86,8 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 // NodeUnpublishVolume unmounts the volume from the target path
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+
+	glog.V(2).Infof("received node unpublish volume request %+v", protosanitizer.StripSecrets(req))
 
 	targetPath := req.GetTargetPath()
 
@@ -127,9 +132,11 @@ func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 
 // NodeGetInfo returns NodeGetInfoResponse for CO.
 func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	glog.V(5).Infof("Using default NodeGetInfo")
+
+	glog.V(2).Infof("received node get info request %+v", protosanitizer.StripSecrets(req))
 
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.NodeID,
 	}, nil
+
 }
