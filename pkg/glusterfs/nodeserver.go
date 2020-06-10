@@ -38,6 +38,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	mounted, error := ns.mounter.IsLikelyNotMountPoint(targetPath)
 
 	if error != nil {
+
 		if os.IsNotExist(error) {
 			if error := os.MkdirAll(targetPath, 0750); error != nil {
 				return nil, status.Error(codes.Internal, error.Error())
@@ -65,12 +66,15 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	error = ns.mounter.Mount(source, targetPath, "glusterfs", mountFlags)
 
 	if error != nil {
+
 		if os.IsPermission(error) {
 			return nil, status.Error(codes.PermissionDenied, error.Error())
 		}
+
 		if strings.Contains(error.Error(), "invalid argument") {
 			return nil, status.Error(codes.InvalidArgument, error.Error())
 		}
+
 		return nil, status.Error(codes.Internal, error.Error())
 	}
 
@@ -85,11 +89,12 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	mounted, error := ns.mounter.IsLikelyNotMountPoint(targetPath)
 
 	if error != nil {
+
 		if os.IsNotExist(error) {
 			return nil, status.Error(codes.NotFound, "Targetpath not found")
-		} else {
-			return nil, status.Error(codes.Internal, error.Error())
 		}
+
+		return nil, status.Error(codes.Internal, error.Error())
 	}
 
 	if mounted {
@@ -117,19 +122,7 @@ func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 
 // NodeGetCapabilities returns the supported capabilities of the node server
 func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default NodeGetCapabilities")
-
-	return &csi.NodeGetCapabilitiesResponse{
-		Capabilities: []*csi.NodeServiceCapability{
-			{
-				Type: &csi.NodeServiceCapability_Rpc{
-					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_UNKNOWN,
-					},
-				},
-			},
-		},
-	}, nil
+	return &csi.NodeGetCapabilitiesResponse{}, nil
 }
 
 // NodeGetInfo returns NodeGetInfoResponse for CO.
