@@ -12,6 +12,17 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
 
+// Common allocation units
+const (
+	KB int64 = 1024
+	MB int64 = 1024 * KB
+	GB int64 = 1024 * MB
+	TB int64 = 1024 * GB
+
+	minReplicaCount = 1
+	maxReplicaCount = 10
+)
+
 // ControllerServer struct of GlusterFS CSI driver with supported methods of CSI controller server spec.
 type ControllerServer struct {
 	*Driver
@@ -41,7 +52,22 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 	}
 
-	return nil, nil
+	volSizeBytes := 1 * GB
+
+	if capRange := req.GetCapacityRange(); capRange != nil {
+		volSizeBytes = capRange.GetRequiredBytes()
+	}
+
+	return &csi.CreateVolumeResponse{
+		Volume: &csi.Volume{
+			VolumeId:      req.Name,
+			CapacityBytes: volSizeBytes,
+			VolumeContext: map[string]string{
+				"glustervol":    req.Name,
+				"glusterserver": cs.Servers[0],
+			},
+		},
+	}, nil
 }
 
 // DeleteVolume deletes the given volume.

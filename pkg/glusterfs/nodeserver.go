@@ -62,8 +62,8 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		mountFlags = append(mountFlags, "ro")
 	}
 
-	server := req.GetVolumeContext()["server"]
-	brick := req.GetVolumeContext()["brick"]
+	server := req.GetVolumeContext()["glusterserver"]
+	brick := req.GetVolumeContext()["glustervol"]
 	source := fmt.Sprintf("%s:%s", server, brick)
 
 	error = ns.mounter.Mount(source, targetPath, "glusterfs", mountFlags)

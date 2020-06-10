@@ -5,6 +5,7 @@ type Config struct {
 	Endpoint      string
 	NodeID        string
 	BlockHostPath string
+	Servers       []string
 }
 
 //NewConfig returns config struct to initialize new driver
