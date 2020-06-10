@@ -9,7 +9,7 @@ const (
 	glusterfsCSIDriverVersion = "1.0.0"
 )
 
-// Driver
+// Driver is the struct embedding information about the connection to gluster cluster and configuration of CSI driver.
 type Driver struct {
 	*config.Config
 }
