@@ -100,24 +100,70 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}, nil
 }
 
-// DeleteVolume deletes the given volume.
+// DeleteVolume deletes the given volume
 func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 	return nil, nil
 }
 
-// ControllerPublishVolume
+// ControllerPublishVolume return Unimplemented error
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// ControllerUnpublishVolume
+// ControllerUnpublishVolume return Unimplemented error
 func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // ValidateVolumeCapabilities checks whether the volume capabilities requested are supported.
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
-	return nil, nil
+
+	glog.V(2).Infof("received controller validate volume capability request %+v", protosanitizer.StripSecrets(req))
+
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "request is nil")
+	}
+
+	volumeID := req.GetVolumeId()
+
+	if volumeID == "" {
+		return nil, status.Error(codes.InvalidArgument, "VolumeId is nil")
+	}
+
+	volumeCapabilities := req.GetVolumeCapabilities()
+
+	if volumeCapabilities == nil {
+		return nil, status.Error(codes.InvalidArgument, "VolumeCapabilities is nil")
+	}
+
+	var volumeCapabilityAccessModes []*csi.VolumeCapability_AccessMode
+
+	for _, mode := range []csi.VolumeCapability_AccessMode_Mode{
+		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
+		csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER,
+	} {
+		volumeCapabilityAccessModes = append(volumeCapabilityAccessModes, &csi.VolumeCapability_AccessMode{Mode: mode})
+	}
+
+	capabilitySupport := false
+
+	for _, caapability := range volumeCapabilities {
+		for _, volumeCapabilityAccessMode := range volumeCapabilityAccessModes {
+			if volumeCapabilityAccessMode.Mode == caapability.AccessMode.Mode {
+				capabilitySupport = true
+			}
+		}
+	}
+
+	if !capabilitySupport {
+		return nil, status.Errorf(codes.NotFound, "%v not supported", req.GetVolumeCapabilities())
+	}
+
+	return &csi.ValidateVolumeCapabilitiesResponse{
+		Confirmed: &csi.ValidateVolumeCapabilitiesResponse_Confirmed{
+			VolumeCapabilities: req.VolumeCapabilities,
+		},
+	}, nil
 }
 
 // ListVolumes returns a list of volumes
