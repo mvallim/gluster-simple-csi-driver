@@ -2,6 +2,9 @@ package glusterfs
 
 import (
 	"context"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
@@ -28,6 +31,18 @@ type ControllerServer struct {
 	*Driver
 }
 
+// RoundUpSize calculates how many allocation units are needed to accommodate a volume of given size.
+// RoundUpSize(1500 * 1000*1000, 1000*1000*1000) returns '2'
+// (2 GB is the smallest allocatable volume that can hold 1500MiB)
+func RoundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
+	return (volumeSizeBytes + allocationUnitBytes - 1) / allocationUnitBytes
+}
+
+// RoundUpToGB rounds up given quantity upto chunks of GB
+func RoundUpToGB(sizeBytes int64) int64 {
+	return RoundUpSize(sizeBytes, GB)
+}
+
 // CreateVolume creates and starts the volume
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 
@@ -41,21 +56,36 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, "name is a required field")
 	}
 
-	reqCaps := req.GetVolumeCapabilities()
-	if reqCaps == nil {
+	volumeCapabilities := req.GetVolumeCapabilities()
+
+	if volumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "volume capabilities is a required field")
 	}
 
-	for _, cap := range reqCaps {
+	for _, cap := range volumeCapabilities {
 		if cap.GetBlock() != nil {
 			return nil, status.Error(codes.Unimplemented, "block volume not supported")
 		}
 	}
 
+	mountPoint := ":" + cs.Config.BlockHostPath + "/" + req.Name
+
+	os.MkdirAll(mountPoint, 0755)
+
+	servers := strings.Join(cs.Config.Servers, mountPoint+" ")
+
+	replicas := len(cs.Config.Servers)
+
+	commandCreateVolume := exec.Command("gluster", "volume", "create", req.Name, "replica", string(replicas), "arbiter 1", "transport", "tcp", servers)
+	commandStartVolume := exec.Command("gluster", "volume", "start", req.Name)
+
+	commandCreateVolume.Run()
+	commandStartVolume.Run()
+
 	volSizeBytes := 1 * GB
 
 	if capRange := req.GetCapacityRange(); capRange != nil {
-		volSizeBytes = capRange.GetRequiredBytes()
+		volSizeBytes = RoundUpToGB(capRange.GetRequiredBytes())
 	}
 
 	return &csi.CreateVolumeResponse{
