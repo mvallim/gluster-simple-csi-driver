@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-gluster-resizer
+  labels:
+    app: csi-glusterfs-resizer
+spec:
+  selector:
+    app: csi-glusterfs-resizer
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-glusterfs-resizer
+spec:
+  serviceName: "csi-glusterfs-resizer"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: csi-glusterfs-resizer
+  template:
+    metadata:
+      labels:
+        app: csi-glusterfs-resizer
+    spec:
+      nodeSelector:
+        storagenode: glusterfs
+      serviceAccountName: csi-resizer
+      containers:
+        - name: csi-resizer
+          securityContext:
+            privileged: true
+          image: quay.io/k8scsi/csi-resizer:canary
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/org.gluster.glusterfs
+            type: DirectoryOrCreate

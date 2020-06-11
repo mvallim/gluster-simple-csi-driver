@@ -12,5 +12,6 @@ require (
 	github.com/stretchr/testify v1.6.1 // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	google.golang.org/grpc v1.29.1
+	k8s.io/client-go v0.17.0
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 )

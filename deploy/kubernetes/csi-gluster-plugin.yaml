@@ -28,32 +28,28 @@ spec:
     spec:
       hostNetwork: true
       containers:
-
         - name: node-driver-registrar
+          securityContext:
+            privileged: true
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
           args:
             - "--v=5"
-            - "--csi-address=$(ADDRESS)"
-            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/org.gluster.glusterfs /registration/org.gluster.glusterfs-reg.sock"]
+            - "--csi-address=$(CSI_ENDPOINT)"
+            - "--kubelet-registration-path=$(KUBELET_REGISTRATION)"
           env:
-            - name: ADDRESS
-              value: /plugin/csi.sock
-            - name: DRIVER_REG_SOCK_PATH
-              value: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs/csi.sock
+            - name: KUBELET_REGISTRATION
+              value: /var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
           volumeMounts:
             - name: socket-dir
-              mountPath: /plugin
+              mountPath: /csi
             - name: registration-dir
               mountPath: /registration
-
         - name: csi-glusterfs-driver
           securityContext:
             privileged: true
@@ -70,19 +66,43 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: unix://plugin/csi.sock
+              value: unix://csi/csi.sock
           imagePullPolicy: "IfNotPresent"
+          ports:
+          - containerPort: 9898
+            name: healthz
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 2
           volumeMounts:
             - name: socket-dir
-              mountPath: /plugin
+              mountPath: /csi
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
-              
+        - name: liveness-probe
+          securityContext:
+            privileged: true
+          image: quay.io/k8scsi/livenessprobe:v1.1.0
+          args:
+            - "--csi-address=$(CSI_ENDPOINT)"
+            - "--health-port=9898"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix://csi/csi.sock            
+          volumeMounts:
+          - mountPath: /csi
+            name: socket-dir
       volumes:
         - name: socket-dir
           hostPath:
-            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs
+            path: /var/lib/kubelet/plugins/org.gluster.glusterfs
             type: DirectoryOrCreate
         - name: registration-dir
           hostPath:
@@ -91,4 +111,4 @@ spec:
         - name: pods-mount-dir
           hostPath:
             path: /var/lib/kubelet/pods
-            type: Directory
+            type: DirectoryOrCreate

@@ -24,32 +24,32 @@ spec:
     metadata:
       labels:
         app: csi-glusterfs-attacher
-        glusterfs-node: pod
     spec:
       nodeSelector:
         storagenode: glusterfs
       serviceAccount: csi-attacher
-      containers:
-      
+      containers:     
         - name: csi-attacher
           image: quay.io/k8scsi/csi-attacher:canary
           args:
             - "--v=5"
-            - "--csi-address=$(ADDRESS)"
+            - "--csi-address=$(CSI_ENDPOINT)"
             - "--leader-election"
+          securityContext:
+            privileged: true            
           env:
             - name: MY_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: ADDRESS
-              value: /plugin/csi.sock
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: socket-dir
-              mountPath: /plugin
-
+              mountPath: /csi
       volumes:
         - name: socket-dir
           hostPath:
-            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs
+            path: /var/lib/kubelet/plugins/org.gluster.glusterfs
+            type: DirectoryOrCreate

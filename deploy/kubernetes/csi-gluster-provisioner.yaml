@@ -24,41 +24,27 @@ spec:
     metadata:
       labels:
         app: csi-glusterfs-provisioner
-        glusterfs-node: pod
     spec:
       nodeSelector:
         storagenode: glusterfs
       serviceAccount: csi-provisioner
       containers:
-      
         - name: csi-provisioner
+          securityContext:
+            privileged: true
           image: quay.io/k8scsi/csi-provisioner:canary
           args:
-            - "--csi-address=$(ADDRESS)"
+            - "--csi-address=$(CSI_ENDPOINT)"
             - "--leader-election"
           env:
-            - name: ADDRESS
-              value: /plugin/csi.sock
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
           volumeMounts:
             - name: socket-dir
-              mountPath: /plugin
+              mountPath: /csi
           imagePullPolicy: "IfNotPresent"
-
-        - name: csi-resizer
-          image: quay.io/k8scsi/csi-resizer:canary
-          args:
-            - "--v=5"
-            - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
-          env:
-            - name: ADDRESS
-              value: /plugin/csi.sock
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /plugin
-
       volumes:
         - name: socket-dir
           hostPath:
-            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs
+            path: /var/lib/kubelet/plugins/org.gluster.glusterfs
+            type: DirectoryOrCreate
