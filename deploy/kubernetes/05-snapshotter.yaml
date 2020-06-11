@@ -39,12 +39,13 @@ spec:
             - "--leader-election=false"
           env:
             - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+              value: /plugin/csi.sock
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPath: /plugin
 
       volumes:
         - name: socket-dir
-          emptyDir:
+          hostPath:
+            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs

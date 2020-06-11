@@ -43,24 +43,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-
-        - name: csi-gluster-driver
-          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
-          args:
-            - "--nodeid=$(NODE_ID)"
-            - "--endpoint=$(CSI_ENDPOINT)"
-          env:
-            - name: NODE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: CSI_ENDPOINT
-              value: unix://plugin/csi.sock
+              value: /plugin/csi.sock
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: socket-dir
@@ -68,4 +51,5 @@ spec:
 
       volumes:
         - name: socket-dir
-          emptyDir:
+          hostPath:
+            path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs

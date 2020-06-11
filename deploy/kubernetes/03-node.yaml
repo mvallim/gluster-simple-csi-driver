@@ -49,7 +49,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           volumeMounts:
-            - name: plugin-dir
+            - name: socket-dir
               mountPath: /plugin
             - name: registration-dir
               mountPath: /registration
@@ -73,14 +73,14 @@ spec:
               value: unix://plugin/csi.sock
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
-            - name: plugin-dir
+            - name: socket-dir
               mountPath: /plugin
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
               
       volumes:
-        - name: plugin-dir
+        - name: socket-dir
           hostPath:
             path: /var/lib/kubelet/plugins-registry/org.gluster.glusterfs
             type: DirectoryOrCreate
