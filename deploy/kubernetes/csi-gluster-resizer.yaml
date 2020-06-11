@@ -37,7 +37,7 @@ spec:
           image: quay.io/k8scsi/csi-resizer:canary
           args:
             - "--v=5"
-            - "--csi-address=$(ADDRESS)"
+            - "--csi-address=$(CSI_ENDPOINT)"
             - "--leader-election"
           env:
             - name: CSI_ENDPOINT
