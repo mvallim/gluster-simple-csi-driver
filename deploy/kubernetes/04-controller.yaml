@@ -1,0 +1,188 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-glusterfs-provisioner
+  labels:
+    app: csi-glusterfs-provisioner
+spec:
+  selector:
+    app: csi-glusterfs-provisioner
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1beta1
+metadata:
+  name: csi-glusterfs-provisioner
+spec:
+  serviceName: "csi-glusterfs-provisioner"
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: csi-glusterfs-provisioner
+        glusterfs-node: pod
+    spec:
+      nodeSelector:
+        storagenode: glusterfs
+      serviceAccount: csi-provisioner
+      containers:
+      
+        - name: csi-provisioner
+          image: quay.io/k8scsi/csi-provisioner:canary
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+          imagePullPolicy: "IfNotPresent"
+
+        - name: csi-attacher
+          image: quay.io/k8scsi/csi-attacher:canary
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: MY_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+
+        - name: csi-snapshotter
+          image: quay.io/k8scsi/csi-snapshotter:canary
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--connection-timeout=15s"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:canary
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+
+        - name: csi-gluster-driver
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
+          args:
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix://plugin/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /plugin
+
+        - name: glusterfs
+          image: docker.io/mvallim/gluster-debian:7-stretch
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - name: glusterfs-etc
+            mountPath: "/etc/glusterfs"
+          - name: glusterfs-logs
+            mountPath: "/var/log/glusterfs"
+          - name: glusterfs-config
+            mountPath: "/var/lib/glusterd"
+          - name: glusterfs-dev
+            mountPath: "/dev"
+          - name: glusterfs-run
+            mountPath: "/run"
+          - name: glusterfs-cgroup
+            mountPath: "/sys/fs/cgroup"
+            readOnly: true
+          - name: glusterfs-misc
+            mountPath: "/var/lib/misc/glusterfsd"
+          - name: glusterfs-ssl
+            mountPath: "/etc/ssl"
+            readOnly: true
+          - name: glusterfs-store
+            mountPath: "/srv/store"
+          securityContext:
+            capabilities: {}
+            privileged: true
+          readinessProbe:
+            timeoutSeconds: 3
+            initialDelaySeconds: 40
+            exec:
+              command:
+              - "/bin/bash"
+              - "-c"
+              - nc -z localhost 24007-24008
+            periodSeconds: 25
+            successThreshold: 1
+            failureThreshold: 15
+          livenessProbe:
+            timeoutSeconds: 3
+            initialDelaySeconds: 40
+            exec:
+              command:
+              - "/bin/bash"
+              - "-c"
+              - nc -z localhost 24007-24008
+            periodSeconds: 25
+            successThreshold: 1
+            failureThreshold: 15
+
+      volumes:
+        - name: socket-dir
+          emptyDir:
+        - name: glusterfs-etc
+          hostPath:
+            path: "/etc/glusterfs"
+        - name: glusterfs-logs
+          hostPath:
+            path: "/var/log/glusterfs"
+        - name: glusterfs-config
+          hostPath:
+            path: "/var/lib/glusterd"
+        - name: glusterfs-dev
+          hostPath:
+            path: "/dev"
+        - name: glusterfs-run
+          emptyDir:
+            medium: Memory
+        - name: glusterfs-misc
+          hostPath:
+            path: "/var/lib/misc/glusterfsd"
+        - name: glusterfs-cgroup
+          hostPath:
+            path: "/sys/fs/cgroup"
+        - name: glusterfs-ssl
+          hostPath:
+            path: "/etc/ssl"
+        - name: glusterfs-store
+          hostPath:
+            path: "/srv/store"

@@ -2,12 +2,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: csi-attacher-glusterfs-plugin
+  name: csi-glusterfs-attacher
   labels:
-    app: csi-attacher-glusterfs-plugin
+    app: csi-glusterfs-attacher
 spec:
   selector:
-    app: csi-attacher-glusterfs-plugin
+    app: csi-glusterfs-attacher
   ports:
     - name: dummy
       port: 12345
@@ -16,17 +16,21 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
-  name: csi-attacher-glusterfs-plugin
+  name: csi-glusterfs-attacher
 spec:
-  serviceName: "csi-attacher"
-  replicas: 1
+  serviceName: "csi-glusterfs-attacher"
+  replicas: 3
   template:
     metadata:
       labels:
-        app: csi-attacher-glusterfs-plugin
+        app: csi-glusterfs-attacher
+        glusterfs-node: pod
     spec:
-      serviceAccount: glusterfs-csi
+      nodeSelector:
+        storagenode: glusterfs
+      serviceAccount: csi-attacher
       containers:
+      
         - name: csi-attacher
           image: quay.io/k8scsi/csi-attacher:canary
           args:
@@ -45,7 +49,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
 
-        - name: glusterfs
+        - name: csi-gluster-driver
           image: docker.io/mvallim/gluster-csi-driver:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
@@ -61,6 +65,7 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /plugin
+
       volumes:
         - name: socket-dir
           emptyDir:

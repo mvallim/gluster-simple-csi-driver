@@ -1,24 +1,53 @@
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-node
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-glusterfs-plugin
+  labels:
+    app: csi-glusterfs-plugin
+spec:
+  selector:
+    app: csi-glusterfs-plugin
+  ports:
+    - name: dummy
+      port: 12345
+
+---
 kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
-  name: csi-node-glusterfs-plugin
+  name: csi-glusterfs-plugin
 spec:
   selector:
     matchLabels:
-      app: csi-node-glusterfs-plugin
+      app: csi-glusterfs-plugin
   template:
     metadata:
       labels:
-        app: csi-node-glusterfs-plugin
+        app: csi-glusterfs-plugin
     spec:
-      serviceAccount: glusterfs-csi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: "glusterfs-node"
+                operator: In
+                values:
+                - pod
+      serviceAccount: csi-node
       hostNetwork: true
       containers:
 
-        - name: csi-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:canary
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
           args:
+            - "--v=5"
             - "--csi-address=$(ADDRESS)"
             - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
           lifecycle:
@@ -26,8 +55,7 @@ spec:
               exec:
                 command: [
                   "/bin/sh", "-c",
-                  "rm -rf /registration/org.gluster.glusterfs \
-                  /registration/org.gluster.glusterfs-reg.sock"
+                  "rm -rf /registration/org.gluster.glusterfs /registration/org.gluster.glusterfs-reg.sock"
                 ]
           env:
             - name: ADDRESS
@@ -44,7 +72,7 @@ spec:
             - name: registration-dir
               mountPath: /registration
 
-        - name: glusterfs
+        - name: csi-glusterfs-driver
           securityContext:
             privileged: true
             capabilities:
