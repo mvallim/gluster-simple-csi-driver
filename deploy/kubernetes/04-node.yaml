@@ -15,10 +15,10 @@ spec:
       serviceAccount: glusterfs-csi
       hostNetwork: true
       containers:
-        - name: csi-node-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.0.1
+
+        - name: csi-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:canary
           args:
-            - "--v=5"
             - "--csi-address=$(ADDRESS)"
             - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
           lifecycle:
@@ -43,13 +43,14 @@ spec:
               mountPath: /plugin
             - name: registration-dir
               mountPath: /registration
+
         - name: glusterfs
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: docker.io/mvallim/glusterfs-csi-driver
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -67,6 +68,7 @@ spec:
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
+              
       volumes:
         - name: plugin-dir
           hostPath:

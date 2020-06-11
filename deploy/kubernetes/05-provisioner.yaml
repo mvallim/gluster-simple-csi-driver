@@ -27,11 +27,12 @@ spec:
     spec:
       serviceAccount: glusterfs-csi
       containers:
+      
         - name: csi-provisioner
-          image: quay.io/k8scsi/csi-provisioner:v1.0.1
+          image: quay.io/k8scsi/csi-provisioner:canary
           args:
-            - "--provisioner=org.gluster.glusterfs"
             - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -39,8 +40,9 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
           imagePullPolicy: "IfNotPresent"
+
         - name: csi-cluster-driver-registrar
-          image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
+          image: quay.io/k8scsi/csi-cluster-driver-registrar:canary
           args:
             - "--v=5"
             - "--pod-info-mount-version=\"v1\""
@@ -51,8 +53,9 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+
         - name: csi-snapshotter
-          image: quay.io/k8scsi/csi-snapshotter:v1.0.1
+          image: quay.io/k8scsi/csi-snapshotter:canary
           args:
             - "--csi-address=$(ADDRESS)"
             - "--connection-timeout=15s"
@@ -63,8 +66,9 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+
         - name: glusterfs
-          image: docker.io/mvallim/glusterfs-csi-driver
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"

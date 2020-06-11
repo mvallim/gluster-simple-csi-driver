@@ -28,11 +28,16 @@ spec:
       serviceAccount: glusterfs-csi
       containers:
         - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:v1.0.1
+          image: quay.io/k8scsi/csi-attacher:canary
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
           env:
+            - name: MY_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
           imagePullPolicy: "IfNotPresent"
@@ -41,7 +46,7 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
 
         - name: glusterfs
-          image: docker.io/mvallim/glusterfs-csi-driver
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"

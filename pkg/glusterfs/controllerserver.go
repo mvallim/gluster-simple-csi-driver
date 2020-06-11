@@ -165,7 +165,7 @@ func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 
 // ListVolumes returns a list of volumes
 func (cs *ControllerServer) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // GetCapacity returns the capacity of the storage pool
@@ -205,25 +205,25 @@ func (cs *ControllerServer) ControllerGetCapabilities(ctx context.Context, req *
 
 // CreateSnapshot create snapshot of an existing PV
 func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // DeleteSnapshot delete provided snapshot of a PV
 func (cs *ControllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // ListSnapshots list the snapshots of a PV
 func (cs *ControllerServer) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsRequest) (*csi.ListSnapshotsResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // ControllerExpandVolume
 func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // ControllerGetVolume
 func (cs *ControllerServer) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
