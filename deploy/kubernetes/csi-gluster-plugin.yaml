@@ -17,6 +17,9 @@ kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
   name: csi-glusterfs-plugin
+  labels:
+    app: glusterfs
+    tier: node
 spec:
   selector:
     matchLabels:
