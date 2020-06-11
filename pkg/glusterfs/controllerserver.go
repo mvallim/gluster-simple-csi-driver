@@ -2,9 +2,6 @@ package glusterfs
 
 import (
 	"context"
-	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
@@ -68,19 +65,19 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 	}
 
-	mountPoint := ":" + cs.Config.BlockHostPath + "/" + req.Name
+	// mountPoint := ":" + cs.Config.BlockHostPath + "/" + req.Name
 
-	os.MkdirAll(mountPoint, 0755)
+	// os.MkdirAll(mountPoint, 0755)
 
-	servers := strings.Join(cs.Config.Servers, mountPoint+" ")
+	// servers := strings.Join(cs.Config.Servers, mountPoint+" ")
 
-	replicas := len(cs.Config.Servers)
+	// replicas := len(cs.Config.Servers)
 
-	commandCreateVolume := exec.Command("gluster", "volume", "create", req.Name, "replica", string(replicas), "arbiter 1", "transport", "tcp", servers)
-	commandStartVolume := exec.Command("gluster", "volume", "start", req.Name)
+	// commandCreateVolume := exec.Command("gluster", "volume", "create", req.Name, "replica", string(replicas), "arbiter 1", "transport", "tcp", servers)
+	// commandStartVolume := exec.Command("gluster", "volume", "start", req.Name)
 
-	commandCreateVolume.Run()
-	commandStartVolume.Run()
+	// commandCreateVolume.Run()
+	// commandStartVolume.Run()
 
 	volSizeBytes := 1 * GB
 
@@ -102,7 +99,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 // DeleteVolume deletes the given volume
 func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	return nil, nil
+	return &csi.DeleteVolumeResponse{}, nil
 }
 
 // ControllerPublishVolume return Unimplemented error
@@ -127,13 +124,13 @@ func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	volumeID := req.GetVolumeId()
 
 	if volumeID == "" {
-		return nil, status.Error(codes.InvalidArgument, "VolumeId is nil")
+		return nil, status.Error(codes.InvalidArgument, "volumeId is nil")
 	}
 
 	volumeCapabilities := req.GetVolumeCapabilities()
 
 	if volumeCapabilities == nil {
-		return nil, status.Error(codes.InvalidArgument, "VolumeCapabilities is nil")
+		return nil, status.Error(codes.InvalidArgument, "volumeCapabilities is nil")
 	}
 
 	var volumeCapabilityAccessModes []*csi.VolumeCapability_AccessMode
@@ -173,12 +170,37 @@ func (cs *ControllerServer) ListVolumes(ctx context.Context, req *csi.ListVolume
 
 // GetCapacity returns the capacity of the storage pool
 func (cs *ControllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacityRequest) (*csi.GetCapacityResponse, error) {
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // ControllerGetCapabilities returns the capabilities of the controller service.
 func (cs *ControllerServer) ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-	return nil, nil
+
+	functionControllerServerCapabilities := func(cap csi.ControllerServiceCapability_RPC_Type) *csi.ControllerServiceCapability {
+		return &csi.ControllerServiceCapability{
+			Type: &csi.ControllerServiceCapability_Rpc{
+				Rpc: &csi.ControllerServiceCapability_RPC{
+					Type: cap,
+				},
+			},
+		}
+	}
+
+	var controllerServerCapabilities []*csi.ControllerServiceCapability
+
+	for _, capability := range []csi.ControllerServiceCapability_RPC_Type{
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+		csi.ControllerServiceCapability_RPC_LIST_VOLUMES,
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
+		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
+	} {
+		controllerServerCapabilities = append(controllerServerCapabilities, functionControllerServerCapabilities(capability))
+	}
+
+	return &csi.ControllerGetCapabilitiesResponse{
+		Capabilities: controllerServerCapabilities,
+	}, nil
+
 }
 
 // CreateSnapshot create snapshot of an existing PV
