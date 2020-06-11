@@ -44,7 +44,7 @@ spec:
                   fieldPath: metadata.name
             - name: CSI_ENDPOINT
               value: /csi/csi.sock
-          imagePullPolicy: "IfNotPresent"
+          imagePullPolicy: Always
           volumeMounts:
             - name: socket-dir
               mountPath: /csi

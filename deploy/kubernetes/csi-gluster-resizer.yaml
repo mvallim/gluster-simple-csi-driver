@@ -45,6 +45,7 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
+          imagePullPolicy: Always
       volumes:
         - name: socket-dir
           hostPath:
