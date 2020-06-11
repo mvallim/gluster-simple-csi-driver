@@ -1,0 +1,50 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-glusterfs-snapshotter
+  labels:
+    app: csi-glusterfs-snapshotter
+spec:
+  selector:
+    app: csi-glusterfs-snapshotter
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1beta1
+metadata:
+  name: csi-glusterfs-snapshotter
+spec:
+  serviceName: "csi-glusterfs-snapshotter"
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: csi-glusterfs-snapshotter
+        glusterfs-node: pod
+    spec:
+      nodeSelector:
+        storagenode: glusterfs
+      serviceAccount: csi-snapshotter
+      containers:
+      
+        - name: csi-snapshotter
+          image: quay.io/k8scsi/csi-snapshotter:canary
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election=false"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+
+      volumes:
+        - name: socket-dir
+          emptyDir:

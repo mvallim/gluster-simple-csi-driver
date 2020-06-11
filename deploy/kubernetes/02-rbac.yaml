@@ -46,6 +46,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-provisioner
+    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-provisioner-runner
@@ -110,6 +111,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-attacher
+    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-attacher-runner
@@ -136,4 +138,66 @@ subjects:
 roleRef:
   kind: Role
   name: external-attacher-cfg
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-snapshotter
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: external-snapshotter-runner
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["create", "get", "list", "watch", "update", "delete"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents/status"]
+    verbs: ["update"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-snapshotter-role
+subjects:
+  - kind: ServiceAccount
+    name: csi-snapshotter
+    namespace: glusterfs
+roleRef:
+  kind: ClusterRole
+  name: external-snapshotter-runner
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: external-snapshotter-leaderelection
+rules:
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: external-snapshotter-leaderelection
+subjects:
+  - kind: ServiceAccount
+    name: csi-snapshotter
+roleRef:
+  kind: Role
+  name: external-snapshotter-leaderelection
   apiGroup: rbac.authorization.k8s.io

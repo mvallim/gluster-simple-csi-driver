@@ -1,9 +1,4 @@
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: csi-node
----
 kind: Service
 apiVersion: v1
 metadata:
@@ -31,16 +26,6 @@ spec:
       labels:
         app: csi-glusterfs-plugin
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: "glusterfs-node"
-                operator: In
-                values:
-                - pod
-      serviceAccount: csi-node
       hostNetwork: true
       containers:
 
@@ -53,10 +38,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: [
-                  "/bin/sh", "-c",
-                  "rm -rf /registration/org.gluster.glusterfs /registration/org.gluster.glusterfs-reg.sock"
-                ]
+                command: ["/bin/sh", "-c", "rm -rf /registration/org.gluster.glusterfs /registration/org.gluster.glusterfs-reg.sock"]
           env:
             - name: ADDRESS
               value: /plugin/csi.sock

@@ -44,37 +44,6 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
           imagePullPolicy: "IfNotPresent"
 
-        - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:canary
-          args:
-            - "--v=5"
-            - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
-          env:
-            - name: MY_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-
-        - name: csi-snapshotter
-          image: quay.io/k8scsi/csi-snapshotter:canary
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--connection-timeout=15s"
-          env:
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-
         - name: csi-resizer
           image: quay.io/k8scsi/csi-resizer:canary
           args:
