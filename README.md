@@ -13,6 +13,24 @@ _Although prior to CSI Kubernetes provided a powerful volume plugin system, it w
 
 _CSI was developed as a standard for exposing arbitrary block and file storage storage systems to containerized workloads on Container Orchestration Systems (COs) like Kubernetes. With the adoption of the Container Storage Interface, the Kubernetes volume layer becomes truly extensible. Using CSI, third-party storage providers can write and deploy plugins exposing new storage systems in Kubernetes without ever having to touch the core Kubernetes code. This gives Kubernetes users more options for storage and makes the system more secure and reliable._
 
+## Pre-requisite
+
+* Kubernetes cluster
+* Running version 1.13 or later
+* Access to terminal with kubectl installed
+
+## Deployment
+
+TODO
+
+## Examples
+
+TODO
+
+## Building the binaries
+
+TODO
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
