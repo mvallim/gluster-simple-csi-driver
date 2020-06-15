@@ -76,7 +76,7 @@ func (cs *ControllerServer) selectPod(host string) (*v1.Pod, error) {
 	return nil, fmt.Errorf("No pod found to match NodeName == %s", host)
 }
 
-func (cs *ControllerServer) ExecuteCommand(pod *v1.Pod, commands []string) error {
+func (cs *ControllerServer) executeCommand(pod *v1.Pod, commands []string) error {
 
 	for _, command := range commands {
 
@@ -179,7 +179,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		fmt.Sprintf("gluster --mode=script volume start %s", req.Name),
 	}
 
-	err = cs.ExecuteCommand(pod, commands)
+	err = cs.executeCommand(pod, commands)
 
 	if err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// ControllerGetVolume
+// ControllerGetVolume get volume info
 func (cs *ControllerServer) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
