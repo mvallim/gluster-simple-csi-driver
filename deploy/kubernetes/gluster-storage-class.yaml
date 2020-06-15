@@ -6,3 +6,8 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: org.gluster.glusterfs
+volumeBindingMode: Immediate
+parameters:
+  servers: "192.168.3.224;192.168.3.55;192.168.3.182"
+  hostPath: "/srv/store"
+  serverLabel: "app=glusterfs-server"

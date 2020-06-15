@@ -1,8 +1,9 @@
 package glusterfs
 
 import (
-	"github.com/golang/glog"
-
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/klog"
 	"k8s.io/utils/mount"
 
 	csicommon "github.com/kubernetes-csi/drivers/pkg/csi-common"
@@ -13,7 +14,7 @@ import (
 func NewDriver(config *config.Config) (*Driver, error) {
 
 	if config == nil {
-		glog.Errorf("GlusterFS Simple CSI driver initialization failed")
+		klog.Errorf("GlusterFS Simple CSI driver initialization failed")
 		return nil, nil
 	}
 
@@ -21,7 +22,7 @@ func NewDriver(config *config.Config) (*Driver, error) {
 		Config: config,
 	}
 
-	glog.V(1).Infof("GlusterFS Simple CSI driver initialized")
+	klog.Infof("GlusterFS Simple CSI driver initialized")
 
 	return driver, nil
 
@@ -29,15 +30,35 @@ func NewDriver(config *config.Config) (*Driver, error) {
 
 // NewControllerServer create new instance controller
 func NewControllerServer(driver *Driver) *ControllerServer {
+	var config *rest.Config
+	var err error
+
+	config, err = rest.InClusterConfig()
+
+	if err != nil {
+		klog.Fatalf("Failed to create config: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+
+	if err != nil {
+		klog.Fatalf("Failed to create client: %v", err)
+	}
+
+	restclient := clientset.CoreV1().RESTClient()
+
 	return &ControllerServer{
-		Driver: driver,
+		Driver:     driver,
+		client:     clientset,
+		config:     config,
+		restclient: restclient,
 	}
 }
 
 // NewNodeServer create new instance node
 func NewNodeServer(driver *Driver) *NodeServer {
 	return &NodeServer{
-		driver:  driver,
+		Driver:  driver,
 		mounter: mount.New(""),
 	}
 }

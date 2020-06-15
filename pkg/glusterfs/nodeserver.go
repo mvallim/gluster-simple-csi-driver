@@ -11,13 +11,13 @@ import (
 	"k8s.io/utils/mount"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+	"k8s.io/klog"
 )
 
 // NodeServer struct of Glusterfs CSI driver with supported methods of CSI node server spec.
 type NodeServer struct {
-	driver  *Driver
+	*Driver
 	mounter mount.Interface
 }
 
@@ -34,7 +34,7 @@ func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 // NodePublishVolume mounts the volume mounted to the staging path to the target path
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 
-	glog.V(2).Infof("received node publish volume request %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("received node publish volume request %+v", protosanitizer.StripSecrets(req))
 
 	targetPath := req.GetTargetPath()
 
@@ -87,7 +87,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 // NodeUnpublishVolume unmounts the volume from the target path
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 
-	glog.V(2).Infof("received node unpublish volume request %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("received node unpublish volume request %+v", protosanitizer.StripSecrets(req))
 
 	targetPath := req.GetTargetPath()
 
@@ -133,10 +133,10 @@ func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 // NodeGetInfo returns NodeGetInfoResponse for CO.
 func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 
-	glog.V(2).Infof("received node get info request %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("received node get info request %+v", protosanitizer.StripSecrets(req))
 
 	return &csi.NodeGetInfoResponse{
-		NodeId: ns.driver.NodeID,
+		NodeId: ns.NodeID,
 	}, nil
 
 }

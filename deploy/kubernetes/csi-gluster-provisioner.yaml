@@ -34,8 +34,10 @@ spec:
             privileged: true
           image: quay.io/k8scsi/csi-provisioner:canary
           args:
+            - "--v=5"
             - "--csi-address=$(CSI_ENDPOINT)"
             - "--leader-election"
+            - "--extra-create-metadata"
           env:
             - name: CSI_ENDPOINT
               value: /csi/csi.sock

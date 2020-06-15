@@ -1,10 +1,19 @@
 package glusterfs
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"path/filepath"
+	"strings"
 
-	"github.com/golang/glog"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+	v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/klog"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,6 +35,9 @@ const (
 // ControllerServer struct of GlusterFS CSI driver with supported methods of CSI controller server spec.
 type ControllerServer struct {
 	*Driver
+	client     kubernetes.Interface
+	restclient rest.Interface
+	config     *rest.Config
 }
 
 // RoundUpSize calculates how many allocation units are needed to accommodate a volume of given size.
@@ -37,13 +49,85 @@ func RoundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
 
 // RoundUpToGB rounds up given quantity upto chunks of GB
 func RoundUpToGB(sizeBytes int64) int64 {
-	return RoundUpSize(sizeBytes, GB)
+	return RoundUpSize(sizeBytes, GB) * GB
+}
+
+func (cs *ControllerServer) selectPod(host string) (*v1.Pod, error) {
+
+	podList, err := cs.client.CoreV1().Pods("glusterfs").List(meta_v1.ListOptions{LabelSelector: cs.ServerLabel})
+
+	if err != nil {
+		return nil, err
+	}
+
+	pods := podList.Items
+
+	if len(pods) == 0 {
+		return nil, fmt.Errorf("No pods found for glusterfs, LabelSelector: %v", cs.ServerLabel)
+	}
+
+	for _, pod := range pods {
+		if pod.Status.PodIP == host {
+			klog.Infof("Pod selecterd: %v/%v\n", pod.Namespace, pod.Name)
+			return &pod, nil
+		}
+	}
+
+	return nil, fmt.Errorf("No pod found to match NodeName == %s", host)
+}
+
+func (cs *ControllerServer) ExecuteCommand(pod *v1.Pod, commands []string) error {
+
+	for _, command := range commands {
+
+		klog.Infof("Pod: %s, ExecuteCommand: %s", pod.Name, command)
+
+		containerName := pod.Spec.Containers[0].Name
+
+		req := cs.restclient.Post().
+			Resource("pods").
+			Name(pod.Name).
+			Namespace(pod.Namespace).
+			SubResource("exec").
+			Param("container", containerName).
+			Param("stdout", "true").
+			Param("stderr", "true").
+			Param("command", "/bin/bash").
+			Param("command", "-c").
+			Param("command", command)
+
+		exec, err := remotecommand.NewSPDYExecutor(cs.config, "POST", req.URL())
+
+		if err != nil {
+			klog.Fatalf("Failed to create NewExecutor: %v", err)
+			return err
+		}
+
+		var b bytes.Buffer
+		var berr bytes.Buffer
+
+		err = exec.Stream(remotecommand.StreamOptions{
+			Stdout: &b,
+			Stderr: &berr,
+			Tty:    false,
+		})
+
+		klog.Infof("Result: %v", b.String())
+		klog.Infof("Result: %v", berr.String())
+
+		if err != nil {
+			klog.Errorf("Failed to create Stream: %v", err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 // CreateVolume creates and starts the volume
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 
-	glog.V(2).Infof("received controller create volume request %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("received controller create volume request %+v", protosanitizer.StripSecrets(req))
 
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "request cannot be empty")
@@ -65,19 +149,24 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 	}
 
-	// mountPoint := ":" + cs.Config.BlockHostPath + "/" + req.Name
+	pvcName := req.Parameters["csi.storage.k8s.io/pvc/name"]
+	pvcNameSpace := req.Parameters["csi.storage.k8s.io/pvc/namespace"]
+	pvName := req.Name
 
-	// os.MkdirAll(mountPoint, 0755)
+	hosts := strings.Split(cs.Servers, ";")
+	path := filepath.Join(cs.HostPath, pvcNameSpace, pvcName, pvName)
 
-	// servers := strings.Join(cs.Config.Servers, mountPoint+" ")
+	var bricks string
 
-	// replicas := len(cs.Config.Servers)
+	for _, host := range hosts {
+		bricks += strings.Join([]string{host, path + " "}, ":")
+	}
 
-	// commandCreateVolume := exec.Command("gluster", "volume", "create", req.Name, "replica", string(replicas), "arbiter 1", "transport", "tcp", servers)
-	// commandStartVolume := exec.Command("gluster", "volume", "start", req.Name)
+	pod, err := cs.selectPod(hosts[0])
 
-	// commandCreateVolume.Run()
-	// commandStartVolume.Run()
+	if err != nil {
+		return nil, err
+	}
 
 	volSizeBytes := 1 * GB
 
@@ -85,13 +174,25 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		volSizeBytes = RoundUpToGB(capRange.GetRequiredBytes())
 	}
 
+	commands := []string{
+		fmt.Sprintf("gluster --mode=script volume create %s replica %v arbiter 1 transport tcp %s", req.Name, len(hosts), bricks),
+		fmt.Sprintf("gluster --mode=script volume start %s", req.Name),
+	}
+
+	err = cs.ExecuteCommand(pod, commands)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
 			VolumeId:      req.Name,
-			CapacityBytes: volSizeBytes,
+			CapacityBytes: int64(volSizeBytes),
 			VolumeContext: map[string]string{
 				"glustervol":    req.Name,
-				"glusterserver": cs.Servers[0],
+				"glusterserver": hosts[0],
+				"glusterpath":   path,
 			},
 		},
 	}, nil
@@ -115,7 +216,7 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 // ValidateVolumeCapabilities checks whether the volume capabilities requested are supported.
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
 
-	glog.V(2).Infof("received controller validate volume capability request %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("received controller validate volume capability request %+v", protosanitizer.StripSecrets(req))
 
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "request is nil")
@@ -219,7 +320,7 @@ func (cs *ControllerServer) ListSnapshots(ctx context.Context, req *csi.ListSnap
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// ControllerExpandVolume
+// ControllerExpandVolume resizes a volume
 func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
