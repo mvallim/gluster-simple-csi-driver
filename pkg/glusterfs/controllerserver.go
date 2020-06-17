@@ -1,18 +1,15 @@
 package glusterfs
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
-	v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog"
 
 	"google.golang.org/grpc/codes"
@@ -35,9 +32,6 @@ const (
 // ControllerServer struct of GlusterFS CSI driver with supported methods of CSI controller server spec.
 type ControllerServer struct {
 	*Driver
-	client     kubernetes.Interface
-	restclient rest.Interface
-	config     *rest.Config
 }
 
 // RoundUpSize calculates how many allocation units are needed to accommodate a volume of given size.
@@ -50,78 +44,6 @@ func RoundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
 // RoundUpToGB rounds up given quantity upto chunks of GB
 func RoundUpToGB(sizeBytes int64) int64 {
 	return RoundUpSize(sizeBytes, GB) * GB
-}
-
-func (cs *ControllerServer) selectPod(host string) (*v1.Pod, error) {
-
-	podList, err := cs.client.CoreV1().Pods("glusterfs").List(meta_v1.ListOptions{LabelSelector: cs.ServerLabel})
-
-	if err != nil {
-		return nil, err
-	}
-
-	pods := podList.Items
-
-	if len(pods) == 0 {
-		return nil, fmt.Errorf("No pods found for glusterfs, LabelSelector: %v", cs.ServerLabel)
-	}
-
-	for _, pod := range pods {
-		if pod.Status.PodIP == host {
-			klog.Infof("Pod selecterd: %v/%v\n", pod.Namespace, pod.Name)
-			return &pod, nil
-		}
-	}
-
-	return nil, fmt.Errorf("No pod found to match NodeName == %s", host)
-}
-
-func (cs *ControllerServer) executeCommand(pod *v1.Pod, commands []string) error {
-
-	for _, command := range commands {
-
-		klog.Infof("Pod: %s, ExecuteCommand: %s", pod.Name, command)
-
-		containerName := pod.Spec.Containers[0].Name
-
-		req := cs.restclient.Post().
-			Resource("pods").
-			Name(pod.Name).
-			Namespace(pod.Namespace).
-			SubResource("exec").
-			Param("container", containerName).
-			Param("stdout", "true").
-			Param("stderr", "true").
-			Param("command", "/bin/bash").
-			Param("command", "-c").
-			Param("command", command)
-
-		exec, err := remotecommand.NewSPDYExecutor(cs.config, "POST", req.URL())
-
-		if err != nil {
-			klog.Fatalf("Failed to create NewExecutor: %v", err)
-			return err
-		}
-
-		var b bytes.Buffer
-		var berr bytes.Buffer
-
-		err = exec.Stream(remotecommand.StreamOptions{
-			Stdout: &b,
-			Stderr: &berr,
-			Tty:    false,
-		})
-
-		klog.Infof("Result: %v", b.String())
-		klog.Infof("Result: %v", berr.String())
-
-		if err != nil {
-			klog.Errorf("Failed to create Stream: %v", err)
-			return err
-		}
-	}
-
-	return nil
 }
 
 // CreateVolume creates and starts the volume
@@ -154,18 +76,12 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	pvName := req.Name
 
 	hosts := strings.Split(cs.Servers, ";")
-	path := filepath.Join(cs.HostPath, pvcNameSpace, pvcName, pvName)
+	hostPath := filepath.Join(cs.HostPath, pvcNameSpace, pvcName, pvName)
 
 	var bricks string
 
 	for _, host := range hosts {
-		bricks += strings.Join([]string{host, path + " "}, ":")
-	}
-
-	pod, err := cs.selectPod(hosts[0])
-
-	if err != nil {
-		return nil, err
+		bricks += strings.Join([]string{host, hostPath + " "}, ":")
 	}
 
 	volSizeBytes := 1 * GB
@@ -175,24 +91,28 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	commands := []string{
-		fmt.Sprintf("gluster --mode=script volume create %s replica %v arbiter 1 transport tcp %s", req.Name, len(hosts), bricks),
-		fmt.Sprintf("gluster --mode=script volume start %s", req.Name),
+		fmt.Sprintf("gluster --mode=script volume create %s replica %v arbiter 1 transport tcp %s", pvName, len(hosts), bricks),
+		fmt.Sprintf("gluster --mode=script volume start %s", pvName),
 	}
 
-	err = cs.executeCommand(pod, commands)
+	for _, command := range commands {
+		cmd := exec.Command(command)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			log.Fatalf("cmd.Run() failed with %s\n", err)
+		}
 	}
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      req.Name,
+			VolumeId:      pvName,
 			CapacityBytes: int64(volSizeBytes),
 			VolumeContext: map[string]string{
-				"glustervol":    req.Name,
+				"glustervol":    pvName,
 				"glusterserver": hosts[0],
-				"glusterpath":   path,
 			},
 		},
 	}, nil

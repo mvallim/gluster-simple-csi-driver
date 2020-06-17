@@ -1,8 +1,6 @@
 package glusterfs
 
 import (
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog"
 	"k8s.io/utils/mount"
 
@@ -30,28 +28,8 @@ func NewDriver(config *config.Config) (*Driver, error) {
 
 // NewControllerServer create new instance controller
 func NewControllerServer(driver *Driver) *ControllerServer {
-	var config *rest.Config
-	var err error
-
-	config, err = rest.InClusterConfig()
-
-	if err != nil {
-		klog.Fatalf("Failed to create config: %v", err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-
-	if err != nil {
-		klog.Fatalf("Failed to create client: %v", err)
-	}
-
-	restclient := clientset.CoreV1().RESTClient()
-
 	return &ControllerServer{
-		Driver:     driver,
-		client:     clientset,
-		config:     config,
-		restclient: restclient,
+		Driver: driver,
 	}
 }
 

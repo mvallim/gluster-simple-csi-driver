@@ -59,7 +59,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	mountFlags := req.GetVolumeCapability().GetMount().GetMountFlags()
 
 	if req.GetReadonly() {
-		mountFlags = append(mountFlags, "ro")
+		mountFlags = append(mountFlags, "rw")
 	}
 
 	server := req.GetVolumeContext()["glusterserver"]
