@@ -51,7 +51,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: docker.io/mvallim/gluster-csi-driver:v1.0.0-server
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0-provisioner
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"

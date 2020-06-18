@@ -11,9 +11,9 @@ compile:
 
 build:
 	@echo "==> Building the docker image provisioner"
-	@docker build -t mvallim/gluster-csi-driver:$(VERSION)-provisioner Dockerfile.provisioner
+	@docker build -f Dockerfile.provisioner -t mvallim/gluster-csi-driver:$(VERSION)-provisioner .
 	@echo "==> Building the docker image agent"
-	@docker build -t mvallim/gluster-csi-driver:$(VERSION)-client Dockerfile.agent
+	@docker build -f Dockerfile.agent -t mvallim/gluster-csi-driver:$(VERSION)-agent .
 
 push:
 	@echo "==> Publishing mvallim/gluster-csi-driver:$(VERSION)-provisioner"
