@@ -2,12 +2,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: csi-glusterfs-node
+  name: csi-glusterfs-registrar
   labels:
-    app: csi-glusterfs-node
+    app: csi-glusterfs-registrar
 spec:
   selector:
-    app: csi-glusterfs-node
+    app: csi-glusterfs-registrar
   ports:
     - name: dummy
       port: 12345
@@ -16,18 +16,18 @@ spec:
 kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
-  name: csi-glusterfs-node
+  name: csi-glusterfs-registrar
   labels:
     app: glusterfs
     tier: node
 spec:
   selector:
     matchLabels:
-      app: csi-glusterfs-node
+      app: csi-glusterfs-registrar
   template:
     metadata:
       labels:
-        app: csi-glusterfs-node
+        app: csi-glusterfs-registrar
     spec:
       hostNetwork: true
       containers:
