@@ -72,16 +72,18 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	pvcName := req.Parameters["csi.storage.k8s.io/pvc/name"]
+	pvName := req.Parameters["csi.storage.k8s.io/pv/name"]
 	pvcNameSpace := req.Parameters["csi.storage.k8s.io/pvc/namespace"]
-	pvName := req.Name
+	servers := req.Parameters["servers"]
+	hostPath := req.Parameters["hostPath"]
 
-	hosts := strings.Split(cs.Servers, ";")
-	hostPath := filepath.Join(cs.HostPath, pvcNameSpace, pvcName, pvName)
+	hosts := strings.Split(servers, ";")
+	mountPoint := filepath.Join(hostPath, pvcNameSpace, pvcName, pvName)
 
 	var bricks string
 
 	for _, host := range hosts {
-		bricks += strings.Join([]string{host, hostPath + " "}, ":")
+		bricks += strings.Join([]string{host, mountPoint + " "}, ":")
 	}
 
 	volSizeBytes := 1 * GB
