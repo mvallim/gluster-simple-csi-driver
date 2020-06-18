@@ -1,0 +1,64 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-glusterfs-node
+  labels:
+    app: csi-glusterfs-node
+spec:
+  selector:
+    app: csi-glusterfs-node
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: DaemonSet
+apiVersion: apps/v1beta2
+metadata:
+  name: csi-glusterfs-node
+  labels:
+    app: glusterfs
+    tier: node
+spec:
+  selector:
+    matchLabels:
+      app: csi-glusterfs-node
+  template:
+    metadata:
+      labels:
+        app: csi-glusterfs-node
+    spec:
+      hostNetwork: true
+      containers:
+        - name: node-driver-registrar
+          securityContext:
+            privileged: true
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
+          args:
+            - "--v=5"
+            - "--csi-address=$(CSI_ENDPOINT)"
+            - "--kubelet-registration-path=$(KUBELET_REGISTRATION)"
+          env:
+            - name: KUBELET_REGISTRATION
+              value: /var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/org.gluster.glusterfs
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins-registry/
+            type: Directory

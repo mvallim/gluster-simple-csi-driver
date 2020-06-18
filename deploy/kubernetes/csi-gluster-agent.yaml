@@ -2,12 +2,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: csi-glusterfs-plugin
+  name: csi-glusterfs-agent
   labels:
-    app: csi-glusterfs-plugin
+    app: csi-glusterfs-agent
 spec:
   selector:
-    app: csi-glusterfs-plugin
+    app: csi-glusterfs-agent
   ports:
     - name: dummy
       port: 12345
@@ -16,50 +16,45 @@ spec:
 kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
-  name: csi-glusterfs-plugin
+  name: csi-glusterfs-agent
   labels:
     app: glusterfs
     tier: node
 spec:
   selector:
     matchLabels:
-      app: csi-glusterfs-plugin
+      app: csi-glusterfs-agent
   template:
     metadata:
       labels:
-        app: csi-glusterfs-plugin
+        app: csi-glusterfs-agent
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchFields:
+                - key: storagenode
+                  operator: NotIn
+                  values:
+                    - glusterfs
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchFields:
+                - key: storagenode
+                  operator: NotIn
+                  values:
+                    - glusterfs
       hostNetwork: true
       containers:
-        - name: node-driver-registrar
-          securityContext:
-            privileged: true
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
-          args:
-            - "--v=5"
-            - "--csi-address=$(CSI_ENDPOINT)"
-            - "--kubelet-registration-path=$(KUBELET_REGISTRATION)"
-          env:
-            - name: KUBELET_REGISTRATION
-              value: /var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock
-            - name: CSI_ENDPOINT
-              value: /csi/csi.sock
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
-            - name: registration-dir
-              mountPath: /registration
-        - name: csi-glusterfs-driver
+        - name: csi-glusterfs-agent
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: docker.io/mvallim/gluster-csi-driver:v1.0.0
+          image: docker.io/mvallim/gluster-csi-driver:v1.0.0-client
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -98,7 +93,7 @@ spec:
             - "--health-port=9898"
           env:
             - name: CSI_ENDPOINT
-              value: unix://csi/csi.sock            
+              value: unix://csi/csi.sock
           volumeMounts:
           - mountPath: /csi
             name: socket-dir
@@ -107,10 +102,6 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins/org.gluster.glusterfs
             type: DirectoryOrCreate
-        - name: registration-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins-registry/
-            type: Directory
         - name: pods-mount-dir
           hostPath:
             path: /var/lib/kubelet/pods

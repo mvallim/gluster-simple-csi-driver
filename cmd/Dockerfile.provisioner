@@ -1,0 +1,11 @@
+FROM mvallim/gluster-debian:7-stretch-server
+
+LABEL maintainers="Marcos Vallim <tischer@gmail.com>"
+LABEL description="GlusterFS Simple Driver Provisioner"
+
+ENV NODE_ID=""
+ENV CSI_ENDPOINT=""
+
+ADD gluster-simple-csi-plugin /bin/
+
+ENTRYPOINT ["/bin/gluster-simple-csi-plugin"]

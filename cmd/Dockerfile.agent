@@ -1,12 +1,10 @@
-FROM alpine:3.7
+FROM mvallim/gluster-debian:7-stretch-client
 
 LABEL maintainers="Marcos Vallim <tischer@gmail.com>"
-LABEL description="GlusterFS Simple Driver"
+LABEL description="GlusterFS Simple Driver Provisioner"
 
 ENV NODE_ID=""
 ENV CSI_ENDPOINT=""
-
-RUN apk add --no-cache ca-certificates e2fsprogs findmnt util-linux
 
 ADD gluster-simple-csi-plugin /bin/
 
