@@ -8,6 +8,5 @@ metadata:
 provisioner: org.gluster.glusterfs
 volumeBindingMode: Immediate
 parameters:
-  servers: "192.168.3.224;192.168.3.55;192.168.3.182"
+  servers: "192.168.3.12;192.168.3.90;192.168.3.17"
   hostPath: "/srv/store"
-  serverLabel: "app=glusterfs-server"
