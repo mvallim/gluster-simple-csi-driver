@@ -29,23 +29,8 @@ spec:
       labels:
         app: csi-glusterfs-registrar
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                - key: storagenode
-                  operator: NotIn
-                  values:
-                    - glusterfs
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                - key: storagenode
-                  operator: NotIn
-                  values:
-                    - glusterfs
+      nodeSelector:
+        storagenode: glusterfs
       hostNetwork: true
       containers:
         - name: node-driver-registrar
