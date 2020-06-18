@@ -29,8 +29,23 @@ spec:
       labels:
         app: csi-glusterfs-registrar
     spec:
-      nodeSelector:
-        storagenode: glusterfs
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: storagenode
+                  operator: NotIn
+                  values:
+                    - glusterfs
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: storagenode
+                  operator: NotIn
+                  values:
+                    - glusterfs
       hostNetwork: true
       containers:
         - name: node-driver-registrar
@@ -41,6 +56,10 @@ spec:
             - "--v=5"
             - "--csi-address=$(CSI_ENDPOINT)"
             - "--kubelet-registration-path=$(KUBELET_REGISTRATION)"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/org.gluster.glusterfs /registration/org.gluster.glusterfs-reg.sock"]            
           env:
             - name: KUBELET_REGISTRATION
               value: /var/lib/kubelet/plugins/org.gluster.glusterfs/csi.sock
@@ -62,5 +81,5 @@ spec:
             type: DirectoryOrCreate
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins-registry/
+            path: /var/lib/kubelet/plugins_registry
             type: Directory
