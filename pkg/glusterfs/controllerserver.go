@@ -93,12 +93,17 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	commands := []string{
-		fmt.Sprintf("gluster --mode=script volume create %s replica %v arbiter 1 transport tcp %s", pvName, len(hosts), bricks),
-		fmt.Sprintf("gluster --mode=script volume start %s", pvName),
+		fmt.Sprintf("/usr/sbin/gluster --mode=script volume create %s replica %v arbiter 1 transport tcp %s force", pvName, len(hosts), bricks),
+		fmt.Sprintf("/usr/sbin/gluster --mode=script volume start %s", pvName),
 	}
 
 	for _, command := range commands {
-		cmd := exec.Command(command)
+
+		if error := os.MkdirAll(mountPoint, 0755); error != nil {
+			return nil, status.Error(codes.Internal, error.Error())
+		}
+
+		cmd := exec.Command("/bin/bash", "-c", command)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
