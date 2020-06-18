@@ -28,6 +28,7 @@ spec:
       nodeSelector:
         storagenode: glusterfs
       serviceAccount: csi-provisioner
+      hostNetwork: true
       containers:
         - name: csi-provisioner
           securityContext:
