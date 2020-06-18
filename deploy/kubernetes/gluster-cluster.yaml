@@ -14,7 +14,7 @@ spec:
         storagenode: glusterfs
       hostNetwork: true
       shareProcessNamespace: true
-      initContainers:
+      containers:
         - name: glusterfs
           image: mvallim/gluster-debian:7-stretch-server
           imagePullPolicy: Always
@@ -67,7 +67,6 @@ spec:
               readOnly: true
             - name: glusterfs-store
               mountPath: /srv/store
-      containers:
         - name: csi-glusterfs-provisioner
           securityContext:
             privileged: true
