@@ -33,7 +33,7 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchFields:
+              - matchExpressions:
                 - key: storagenode
                   operator: NotIn
                   values:
@@ -41,7 +41,7 @@ spec:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 1
               preference:
-                matchFields:
+                matchExpressions:
                 - key: storagenode
                   operator: NotIn
                   values:

@@ -81,6 +81,26 @@ spec:
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
+            - name: glusterfs-etc
+              mountPath: /etc/glusterfs
+            - name: glusterfs-logs
+              mountPath: /var/log/glusterfs
+            - name: glusterfs-config
+              mountPath: /var/lib/glusterd
+            - name: glusterfs-dev
+              mountPath: /dev
+            - name: glusterfs-run
+              mountPath: /run
+            - name: glusterfs-cgroup
+              mountPath: /sys/fs/cgroup
+              readOnly: true
+            - name: glusterfs-misc
+              mountPath: /var/lib/misc/glusterfsd
+            - name: glusterfs-ssl
+              mountPath: /etc/ssl
+              readOnly: true
+            - name: glusterfs-store
+              mountPath: /srv/store              
         - name: liveness-probe
           securityContext:
             privileged: true
@@ -103,3 +123,30 @@ spec:
           hostPath:
             path: /var/lib/kubelet/pods
             type: DirectoryOrCreate
+        - name: glusterfs-etc
+          hostPath:
+            path: /etc/glusterfs
+        - name: glusterfs-logs
+          hostPath:
+            path: /var/log/glusterfs
+        - name: glusterfs-config
+          hostPath:
+            path: /var/lib/glusterd
+        - name: glusterfs-dev
+          hostPath:
+            path: /dev
+        - name: glusterfs-run
+          emptyDir:
+            medium: Memory
+        - name: glusterfs-misc
+          hostPath:
+            path: /var/lib/misc/glusterfsd
+        - name: glusterfs-cgroup
+          hostPath:
+            path: /sys/fs/cgroup
+        - name: glusterfs-ssl
+          hostPath:
+            path: /etc/ssl
+        - name: glusterfs-store
+          hostPath:
+            path: /srv/store
