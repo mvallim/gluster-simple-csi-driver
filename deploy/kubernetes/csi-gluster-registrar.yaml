@@ -34,7 +34,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                - key: storagenode
+                - key: node
                   operator: NotIn
                   values:
                     - glusterfs
@@ -42,7 +42,7 @@ spec:
             - weight: 1
               preference:
                 matchExpressions:
-                - key: storagenode
+                - key: node
                   operator: NotIn
                   values:
                     - glusterfs

@@ -43,7 +43,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	if error != nil {
 
 		if os.IsNotExist(error) {
-			if error := os.MkdirAll(targetPath, 0755); error != nil {
+			if error := os.MkdirAll(targetPath, 0777); error != nil {
 				return nil, status.Error(codes.Internal, error.Error())
 			}
 			mounted = true

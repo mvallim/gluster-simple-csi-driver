@@ -99,7 +99,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	for _, command := range commands {
 
-		if error := os.MkdirAll(mountPoint, 0755); error != nil {
+		if error := os.MkdirAll(mountPoint, 0777); error != nil {
 			return nil, status.Error(codes.Internal, error.Error())
 		}
 

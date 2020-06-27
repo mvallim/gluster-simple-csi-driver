@@ -11,7 +11,7 @@ spec:
         app: glusterfs-server
     spec:
       nodeSelector:
-        storagenode: glusterfs
+        node: glusterfs
       hostNetwork: true
       shareProcessNamespace: true
       containers:
@@ -148,12 +148,15 @@ spec:
         - name: glusterfs-etc
           hostPath:
             path: /etc/glusterfs
+            type: DirectoryOrCreate
         - name: glusterfs-logs
           hostPath:
             path: /var/log/glusterfs
+            type: DirectoryOrCreate
         - name: glusterfs-config
           hostPath:
             path: /var/lib/glusterd
+            type: DirectoryOrCreate
         - name: glusterfs-dev
           hostPath:
             path: /dev
@@ -163,12 +166,14 @@ spec:
         - name: glusterfs-misc
           hostPath:
             path: /var/lib/misc/glusterfsd
+            type: DirectoryOrCreate
         - name: glusterfs-cgroup
           hostPath:
             path: /sys/fs/cgroup
         - name: glusterfs-ssl
           hostPath:
             path: /etc/ssl
+            type: DirectoryOrCreate
         - name: glusterfs-store
           hostPath:
             path: /srv/store
