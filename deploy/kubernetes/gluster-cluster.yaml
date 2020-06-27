@@ -49,8 +49,6 @@ spec:
           volumeMounts:
             - name: glusterfs-etc
               mountPath: /etc/glusterfs
-            - name: glusterfs-logs
-              mountPath: /var/log/glusterfs
             - name: glusterfs-config
               mountPath: /var/lib/glusterd
             - name: glusterfs-dev
@@ -59,11 +57,6 @@ spec:
               mountPath: /run
             - name: glusterfs-cgroup
               mountPath: /sys/fs/cgroup
-              readOnly: true
-            - name: glusterfs-misc
-              mountPath: /var/lib/misc/glusterfsd
-            - name: glusterfs-ssl
-              mountPath: /etc/ssl
               readOnly: true
             - name: glusterfs-store
               mountPath: /srv/store
@@ -105,8 +98,6 @@ spec:
               mountPropagation: "Bidirectional"
             - name: glusterfs-etc
               mountPath: /etc/glusterfs
-            - name: glusterfs-logs
-              mountPath: /var/log/glusterfs
             - name: glusterfs-config
               mountPath: /var/lib/glusterd
             - name: glusterfs-dev
@@ -115,11 +106,6 @@ spec:
               mountPath: /run
             - name: glusterfs-cgroup
               mountPath: /sys/fs/cgroup
-              readOnly: true
-            - name: glusterfs-misc
-              mountPath: /var/lib/misc/glusterfsd
-            - name: glusterfs-ssl
-              mountPath: /etc/ssl
               readOnly: true
             - name: glusterfs-store
               mountPath: /srv/store
@@ -149,10 +135,6 @@ spec:
           hostPath:
             path: /etc/glusterfs
             type: DirectoryOrCreate
-        - name: glusterfs-logs
-          hostPath:
-            path: /var/log/glusterfs
-            type: DirectoryOrCreate
         - name: glusterfs-config
           hostPath:
             path: /var/lib/glusterd
@@ -163,17 +145,9 @@ spec:
         - name: glusterfs-run
           emptyDir:
             medium: Memory
-        - name: glusterfs-misc
-          hostPath:
-            path: /var/lib/misc/glusterfsd
-            type: DirectoryOrCreate
         - name: glusterfs-cgroup
           hostPath:
             path: /sys/fs/cgroup
-        - name: glusterfs-ssl
-          hostPath:
-            path: /etc/ssl
-            type: DirectoryOrCreate
         - name: glusterfs-store
           hostPath:
             path: /srv/store
