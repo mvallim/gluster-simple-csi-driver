@@ -6,11 +6,9 @@ import (
 	"os"
 
 	"github.com/golang/glog"
-
-	"github.com/spf13/cobra"
-
 	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs"
 	"github.com/mvallim/gluster-simple-csi-driver/pkg/glusterfs/config"
+	"github.com/spf13/cobra"
 )
 
 func main() {

@@ -10,7 +10,7 @@ RUN apt-get update && \
 ADD . /dockerdev
 WORKDIR /dockerdev/cmd
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o gluster-simple-csi-plugin
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-extldflags "-static"' -o gluster-simple-csi-plugin
 
 # Final stage
 FROM mvallim/gluster-debian:7-stretch-server
