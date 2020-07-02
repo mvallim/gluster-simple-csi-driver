@@ -4,6 +4,9 @@ NAME=gluster-simple-csi-plugin
 all: publish
 
 publish: build push
+	@echo "==> Publish packages on Go"
+	@curl -X GET "https://proxy.golang.org/github.com/mvallim/gluster-simple-csi-driver/@v/master.info"
+	@echo "\n==> Published packages on Go"
 
 build:
 	@echo "==> Building the docker image provisioner"
