@@ -1,5 +1,9 @@
 package glusterfs
 
+// #include <stdio.h>
+// #include <stdlib.h>
+import "C"
+
 import (
 	"context"
 	"fmt"
@@ -219,9 +223,6 @@ func (cs *ControllerServer) ControllerGetCapabilities(ctx context.Context, req *
 	for _, capability := range []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_LIST_VOLUMES,
-		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
-		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
-		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 	} {
 		controllerServerCapabilities = append(controllerServerCapabilities, functionControllerServerCapabilities(capability))
 	}
