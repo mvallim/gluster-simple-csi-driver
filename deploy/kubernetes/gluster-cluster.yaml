@@ -60,7 +60,7 @@ spec:
               readOnly: true
             - name: glusterfs-store
               mountPath: /srv/store
-        - name: csi-glusterfs-provisioner
+        - name: csi-glusterfs-controller
           securityContext:
             privileged: true
             capabilities:

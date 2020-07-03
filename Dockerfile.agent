@@ -1,16 +1,10 @@
 # Compile stage
 FROM golang:stretch AS build-env
 
-RUN apt-get update && \
-    apt-get install -y apt-transport-https ca-certificates gnupg2 dirmngr netcat procps && \
-    apt-key adv --fetch-keys https://download.gluster.org/pub/gluster/glusterfs/7/rsa.pub && \
-    echo 'deb https://download.gluster.org/pub/gluster/glusterfs/7/LATEST/Debian/9/amd64/apt/ stretch main' > /etc/apt/sources.list.d/gluster.list && \
-    apt-get update && apt-get install -y glusterfs-server && apt-get clean
-
 ADD . /dockerdev
 WORKDIR /dockerdev/cmd
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-extldflags "-static"' -o gluster-simple-csi-plugin
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o gluster-simple-csi-plugin
 
 # Final stage
 FROM mvallim/gluster-debian:7-stretch-client
