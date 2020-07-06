@@ -1,27 +1,32 @@
 apiVersion: v1
 kind: Service
 metadata:
+  namespace: glusterfs-system
   name: glusterfs-server-service
 spec:
   selector:
     app: glusterfs-server
   ports:
     - protocol: TCP
+      name: gluster-port1
       port: 24007
       targetPort: 24007
     - protocol: TCP
+      name: gluster-port2
       port: 24008
       targetPort: 24008
 ---
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
+  namespace: glusterfs-system
   name: glusterfs-server
 spec:
   serviceName: glusterfs-server
   replicas: 3
   template:
     metadata:
+      namespace: glusterfs-system
       labels:
         app: glusterfs-server
     spec:
@@ -35,8 +40,10 @@ spec:
           imagePullPolicy: Always
           ports:
           - containerPort: 24007
+            name: gluster-port1
             protocol: TCP
           - containerPort: 24008
+            name: gluster-port2
             protocol: TCP
           securityContext:
             privileged: true

@@ -2,6 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-agent
   labels:
     app: csi-glusterfs-agent
@@ -11,12 +12,12 @@ spec:
   ports:
     - name: dummy
       port: 12345
-
 ---
 kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
   name: csi-glusterfs-agent
+  namespace: glusterfs-system
   labels:
     app: glusterfs
     tier: node
@@ -26,6 +27,7 @@ spec:
       app: csi-glusterfs-agent
   template:
     metadata:
+      namespace: glusterfs-system
       labels:
         app: csi-glusterfs-agent
     spec:

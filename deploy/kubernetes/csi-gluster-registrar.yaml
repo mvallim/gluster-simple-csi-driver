@@ -2,6 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-registrar
   labels:
     app: csi-glusterfs-registrar
@@ -16,6 +17,7 @@ spec:
 kind: DaemonSet
 apiVersion: apps/v1beta2
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-registrar
   labels:
     app: glusterfs
@@ -26,6 +28,7 @@ spec:
       app: csi-glusterfs-registrar
   template:
     metadata:
+      namespace: glusterfs-system
       labels:
         app: csi-glusterfs-registrar
     spec:

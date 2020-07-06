@@ -2,6 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-snapshotter
   labels:
     app: csi-glusterfs-snapshotter
@@ -16,12 +17,14 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-snapshotter
 spec:
   serviceName: "csi-glusterfs-snapshotter"
   replicas: 3
   template:
     metadata:
+      namespace: glusterfs-system
       labels:
         app: csi-glusterfs-snapshotter
     spec:

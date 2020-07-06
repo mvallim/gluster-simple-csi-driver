@@ -2,6 +2,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  namespace: glusterfs-system
   name: csi-provisioner
 
 ---
@@ -46,7 +47,6 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-provisioner
-    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-provisioner-runner
@@ -56,6 +56,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-provisioner-cfg
 rules:
 - apiGroups: [""]
@@ -69,10 +70,12 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-provisioner-role-cfg
 subjects:
   - kind: ServiceAccount
     name: csi-provisioner
+    namespace: glusterfs-system
 roleRef:
   kind: Role
   name: external-provisioner-cfg
@@ -82,6 +85,7 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  namespace: glusterfs-system
   name: csi-attacher
 
 ---
@@ -111,7 +115,6 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-attacher
-    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-attacher-runner
@@ -121,6 +124,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-attacher-cfg
 rules:
 - apiGroups: ["coordination.k8s.io"]
@@ -131,10 +135,12 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-attacher-role-cfg
 subjects:
   - kind: ServiceAccount
     name: csi-attacher
+    namespace: glusterfs-system
 roleRef:
   kind: Role
   name: external-attacher-cfg
@@ -144,6 +150,7 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  namespace: glusterfs-system
   name: csi-snapshotter
 
 ---
@@ -173,7 +180,6 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-snapshotter
-    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-snapshotter-runner
@@ -183,6 +189,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-snapshotter-leaderelection
 rules:
 - apiGroups: ["coordination.k8s.io"]
@@ -193,10 +200,12 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-snapshotter-leaderelection
 subjects:
   - kind: ServiceAccount
     name: csi-snapshotter
+    namespace: glusterfs-system
 roleRef:
   kind: Role
   name: external-snapshotter-leaderelection
@@ -206,6 +215,7 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  namespace: glusterfs-system
   name: csi-resizer
 
 ---
@@ -238,7 +248,6 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-resizer
-    namespace: glusterfs
 roleRef:
   kind: ClusterRole
   name: external-resizer-runner
@@ -248,6 +257,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-resizer-cfg
 rules:
 - apiGroups: ["coordination.k8s.io"]
@@ -258,10 +268,12 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-resizer-role-cfg
 subjects:
   - kind: ServiceAccount
     name: csi-resizer
+    namespace: glusterfs-system
 roleRef:
   kind: Role
   name: external-resizer-cfg

@@ -1,6 +1,7 @@
 apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
 metadata:
+  namespace: glusterfs-system
   name: org.gluster.glusterfs
 spec:
   # To determine at runtime which mode a volume uses, pod info and its

@@ -2,6 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
+  namespace: glusterfs-system
   name: csi-gluster-resizer
   labels:
     app: csi-glusterfs-resizer
@@ -16,12 +17,14 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
+  namespace: glusterfs-system
   name: csi-glusterfs-resizer
 spec:
   serviceName: "csi-glusterfs-resizer"
   replicas: 3
   template:
     metadata:
+      namespace: glusterfs-system
       labels:
         app: csi-glusterfs-resizer
     spec:
