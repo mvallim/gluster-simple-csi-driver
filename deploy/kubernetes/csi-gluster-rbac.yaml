@@ -9,6 +9,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-provisioner-runner
 rules:
   - apiGroups: [""]
@@ -43,10 +44,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-provisioner-role
 subjects:
   - kind: ServiceAccount
     name: csi-provisioner
+    namespace: glusterfs-system
 roleRef:
   kind: ClusterRole
   name: external-provisioner-runner
@@ -92,6 +95,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-attacher-runner
 rules:
   - apiGroups: [""]
@@ -111,10 +115,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-attacher-role
 subjects:
   - kind: ServiceAccount
     name: csi-attacher
+    namespace: glusterfs-system
 roleRef:
   kind: ClusterRole
   name: external-attacher-runner
@@ -157,6 +163,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-snapshotter-runner
 rules:
   - apiGroups: [""]
@@ -176,10 +183,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-snapshotter-role
 subjects:
   - kind: ServiceAccount
     name: csi-snapshotter
+    namespace: glusterfs-system
 roleRef:
   kind: ClusterRole
   name: external-snapshotter-runner
@@ -222,6 +231,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: external-resizer-runner
 rules:
   - apiGroups: [""]
@@ -244,10 +254,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: glusterfs-system
   name: csi-resizer-role
 subjects:
   - kind: ServiceAccount
     name: csi-resizer
+    namespace: glusterfs-system
 roleRef:
   kind: ClusterRole
   name: external-resizer-runner
